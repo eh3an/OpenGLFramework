@@ -16,6 +16,7 @@ class ApplicationSolar : public Application {
       float trans;
       float scale;
       bool hasMoon;
+      float color[3];
       glm::fmat4 model_matrix;
       glm::fmat4 normal_matrix ;
 };

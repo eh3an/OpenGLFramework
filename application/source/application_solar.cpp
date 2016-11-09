@@ -67,6 +67,7 @@ void ApplicationSolar::render() const {
     float rot[8]={0.0f,sourceRot / 88.0f,sourceRot / 225.0f,sourceRot / 365.0f,sourceRot / 687.0f,sourceRot / 4329.0f,sourceRot/ 1751.0f,sourceRot / 30664.0f};
     float trans[8]={0.0,15.0,7.0,18.0,21.0,26.0,31.0,36.0};
     float scale[8]={0.7f,0.05f,0.2f,0.15f,0.1f,1.35f,1.49f,1.1f};
+    float color[8][3]={{1.0f, 0.8f , 0.0f} ,{0.5f, 0.5f , 0.5f} ,{1.0f, 0.35f, 0.0f} ,{0.1f, 0.4f , 0.7f},{0.8f, 0.6f , 0.3f} ,{0.8f, 0.8f , 0.5f} ,{0.9f, 0.7f , 0.5f} ,{0.5f, 1.0f , 1.0f}  };
     bool hasMoon[8]={false,false,false,true,false,false,false,false};
 
 
@@ -76,6 +77,9 @@ void ApplicationSolar::render() const {
         planet[i].trans=trans[i];
         planet[i].scale=scale[i];
         planet[i].hasMoon=hasMoon[i];
+        planet[i].color[0]=color[i][0];
+        planet[i].color[1]=color[i][1];
+        planet[i].color[2]=color[i][2];
        upload_planet_transforms(planet[i]);
     }
 
@@ -118,6 +122,7 @@ void ApplicationSolar::render() const {
         glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
                      1, GL_FALSE, glm::value_ptr(model_matrix));
 
+        glUniform3f(m_shaders.at("planet").u_locs.at("ColorVector"), planet.color[0], planet.color[1], planet.color[2]);
         // extra matrix for normal transformation to keep them orthogonal to surface
         glm::fmat4 normal_matrix = glm::inverseTranspose(glm::inverse(m_view_transform) * model_matrix);
         glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
@@ -183,12 +188,24 @@ void ApplicationSolar::updateView(int i) {
 void ApplicationSolar::updateView() {
   // vertices are transformed in camera space, so camera transform must be inverted
   glm::fmat4 view_matrix = glm::inverse(m_view_transform);
-  glUniformMatrix4fv(m_shaders.at("star").u_locs.at("ViewMatrix"),
-                     1, GL_FALSE, glm::value_ptr(view_matrix));
+
   glUseProgram(m_shaders.at("planet").handle);
+  // add light to sun
+  glm::vec4 sun = {0.0f, 0.0f, 0.0f, 1.0f};
+  sun = view_matrix * sun;
+  glUniform3f(m_shaders.at("planet").u_locs.at("LightSource"), sun.x, sun.y, sun.z);
+
   glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ViewMatrix"),
                      1, GL_FALSE, glm::value_ptr(view_matrix));
   glUseProgram(m_shaders.at("star").handle);
+  glUniformMatrix4fv(m_shaders.at("star").u_locs.at("ViewMatrix"),
+                     1, GL_FALSE, glm::value_ptr(view_matrix));
+
+
+
+
+
+
 }
 
 
@@ -308,6 +325,9 @@ void ApplicationSolar::initializeShaderPrograms() {
   m_shaders.at("planet").u_locs["ModelMatrix"] = -1;
   m_shaders.at("planet").u_locs["ViewMatrix"] = -1;
   m_shaders.at("planet").u_locs["ProjectionMatrix"] = -1;
+  m_shaders.at("planet").u_locs["ColorVector"]=-1;
+m_shaders.at("planet").u_locs["LightSource"]=-1;
+
 
   m_shaders.emplace("star", shader_program{m_resource_path + "shaders/stars.vert",
                                            m_resource_path + "shaders/stars.frag"});
@@ -352,7 +372,6 @@ void ApplicationSolar::initializeGeometry(model& mdl, model_object& object)
     object.draw_mode = GL_TRIANGLES;
     // transfer number of indices to model object
     object.num_elements = GLsizei(mdl.indices.size());
-
 
 }
 

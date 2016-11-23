@@ -3,7 +3,7 @@
 #include "structs.hpp"
 
 #include <glbinding/gl/functions.h>
-// use gl definitions from glbinding 
+// use gl definitions from glbinding
 using namespace gl;
 
 #include <iostream>
@@ -12,10 +12,29 @@ using namespace gl;
 
 namespace utils {
 
-texture_object create_texture_object(pixel_data const& tex) {
-  texture_object t_obj{};
-
-  throw std::logic_error("Texture Object creation not implemented yet");
+texture_object create_texture_object(pixel_data const& tex,int index) {
+  //texture_object t_obj;
+    texture_object t_obj{};
+    glActiveTexture(GL_TEXTURE0+index);
+    glGenTextures(1, &t_obj.handle);
+    glBindTexture(GL_TEXTURE_2D, t_obj.handle);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // determine format of image data, internal format should be sized
+  GLenum internal_format = GL_NONE;
+  if (tex.channels == GL_RED) {
+    internal_format = GL_R8;
+  }
+  else if (tex.channels == GL_RG) {
+    internal_format = GL_RG8;
+  }
+  else if (tex.channels == GL_RGB) {
+    internal_format = GL_RGB8;
+  }
+  else if (tex.channels == GL_RGBA) {
+    internal_format = GL_RGBA8;
+  }
+    glTexImage2D(GL_TEXTURE_2D, 0, GLint(internal_format), tex.width,tex.height, 0, tex.channels,tex.channel_type, &tex.pixels[0]);
 
   return t_obj;
 }
@@ -114,9 +133,9 @@ std::string read_file(std::string const& name) {
   }
   else {
     std::cerr << "File \'" << name << "\' not found" << std::endl;
-    
+
     throw std::invalid_argument(name);
-  } 
+  }
 }
 
 };

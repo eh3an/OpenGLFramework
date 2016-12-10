@@ -50,6 +50,12 @@ class ApplicationSolar : public Application {
   // cpu representation of model
   model_object planet_object;
   model_object star_object;
+  void rendBuffer(GLsizei width, GLsizei height);
+    void frameBuffer(GLsizei width, GLsizei height);
+    void initializeScreenquad();
+    void renderScreenQuad() const;
+
+
 };
 
 #endif
